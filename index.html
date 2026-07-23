@@ -105,7 +105,10 @@
   .daily-note-textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
   .daily-note-save-row{display:flex;align-items:center;gap:10px;margin-top:8px}
   .daily-note-save-row button{font-size:12px;padding:7px 14px}
-  .daily-note-status{font-size:11px;color:#227348}
+  .daily-note-status{font-size:11px;color:#99a0b0}
+  .daily-note-status.pending{color:#7d5d05}
+  .daily-note-status.saved{color:#227348}
+  .daily-note-status.offline{color:#586178}
   .note{font-size:12px;color:var(--muted);line-height:1.55}
   .load-overlay{position:absolute;inset:0;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);border-radius:16px;z-index:5}
   @media(max-width:900px){
@@ -149,10 +152,10 @@
 </header>
 
 <div id="setupBanner" class="setup-banner" style="display:none">
-  まだバックエンドの設定が済んでいません。<code>index.html</code> 内の
-  <code>GAS_URL</code> をデプロイして得た <code>.../exec</code> のURLに、
-  <code>SECRET_KEY</code> を自分だけの合言葉に書き換えてください（<code>Code.gs</code>側の
-  <code>SECRET_KEY</code> と同じ文字列にすること）。それまではこの端末内（オフライン）にのみ保存されます。
+  まだ Firebase の設定が済んでいません。このHTML内の <code>firebaseConfig</code> を、
+  Firebaseコンソール（プロジェクトの設定 &gt; マイアプリ）で取得したご自身の設定オブジェクトに
+  書き換えてください。また、Firestoreの「ルール」で読み書きを許可する設定になっているかも
+  ご確認ください。それまではこの端末内（オフライン／ローカル保存）にのみ保存されます。
 </div>
 
 <main class="layout">
@@ -181,7 +184,7 @@
       </select>
       <label for="counselTime">開始時刻</label>
       <input id="counselTime" type="time" value="19:00">
-      <p class="note">変更すると、全期間の相談予約タスクに反映されます。日曜日は選べません。この設定と進捗はどの端末・どのブラウザから開いても共通で表示されます（オフライン時はこの端末内に保存され、次回オンライン時に同期されます）。</p>
+      <p class="note">変更すると、全期間の相談予約タスクに反映されます。日曜日は選べません。この設定と進捗はどの端末・どのブラウザから開いても共通で表示され、Firestoreを通じてリアルタイムに同期されます（オフライン時はこの端末内に保存され、次回オンライン時に自動的に同期されます）。</p>
     </div>
 
     <h2>表示の意味</h2>
@@ -212,16 +215,40 @@
   <div id="dialogBody" class="modal-body"></div>
 </dialog>
 
+<!-- ===================================================================
+     Firebase Web SDK（compat版・CDN）
+     GASの代わりにFirestoreへ直接読み書きします。
+     =================================================================== -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <script>
 /* =====================================================================
-   バックエンドURL（ここだけ書き換えれば動きます）
-   Google Apps Script（Code.gs）を「ウェブアプリ」としてデプロイした際に
-   発行される、".../exec" で終わるURLを貼り付けてください。
+   ここに、Firebaseコンソール（プロジェクトの設定 > マイアプリ > SDKの設定と構成）
+   で取得した ご自身の firebaseConfig を貼り付けてください。
+   例）
+   const firebaseConfig = {
+     apiKey: "AIza...",
+     authDomain: "your-project.firebaseapp.com",
+     projectId: "your-project",
+     storageBucket: "your-project.appspot.com",
+     messagingSenderId: "123456789012",
+     appId: "1:123456789012:web:xxxxxxxxxxxxxxxxxxxxxx"
+   };
    ===================================================================== */
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxoWR30YK22EBaIjLscjXmvEY5NT-fScivgNl0hrLUk2TGa5CIqbttvo-7b7ytIJCiMxw/exec";
+const firebaseConfig = {
+  apiKey: "AIzaSyDCAaebHzQnaKk3zI3Bb44gGZ0MXkpin-U",
+  authDomain: "rensei-9ba66.firebaseapp.com",
+  projectId: "rensei-9ba66",
+  storageBucket: "rensei-9ba66.firebasestorage.app",
+  messagingSenderId: "1040775797728",
+  appId: "1:1040775797728:web:406840f3c3650a4d022985",
+  measurementId: "G-GZCH4CVDVZ"
+};
 
-/* Code.gs の SECRET_KEY と必ず同じ文字列にしてください。 */
-const SECRET_KEY = "renseihappy";
+/* データを一元管理するFirestoreドキュメント：calendars/rensei_data */
+const FIRESTORE_COLLECTION = "calendars";
+const FIRESTORE_DOC = "rensei_data";
 
 /* localStorage に保存する際のキー。端末内オフライン保存に使用。 */
 const LOCAL_KEY = "renseiCalendarData_v1";
@@ -236,6 +263,10 @@ let settings = { day: 3, time: "19:00" }; // weekly counseling settings
 let customTasks = {};                    // user-defined tasks/memos, keyed by date "YYYY-MM-DD" -> [{id,text}]
 let dailyNotes = {};                      // 定着メモ・反省ノート, keyed by date "YYYY-MM-DD" -> string
 let openDialogDate = null;               // currently open dialog's Date object (for live refresh)
+
+let db = null;
+let docRef = null;
+let unsubscribeSnapshot = null;
 
 const fixedEvents = {
   "2026-09-15":[["deadline","早稲田 出願開始（Web・書類郵送）"]],
@@ -378,47 +409,15 @@ function buildCustomTaskForm(dateKey){
   return wrap;
 }
 
-// ---------- 定着メモ・反省ノート（日付ごとの自由記述ログ） ----------
+// ---------- 定着メモ・反省ノート（日付ごとの自由記述ログ／デバウンス自動保存） ----------
 
-function saveDailyNote(dateKey, text){
-  const trimmed = (text||"");
+function applyDailyNoteToMemory(dateKey, text){
+  const trimmed = text || "";
   if(trimmed.trim()===""){
     delete dailyNotes[dateKey];
   } else {
     dailyNotes[dateKey] = trimmed;
   }
-  saveData();
-}
-
-function buildDailyNoteSection(dateKey){
-  const wrap=document.createElement("div"); wrap.className="daily-note-section";
-  const label=document.createElement("div"); label.className="daily-note-label"; label.textContent="📝 定着メモ・反省ノート";
-  const hint=document.createElement("p"); hint.className="note";
-  hint.textContent="今日読んだニュースの要約（120字）／模擬面接でうまく言えなかったこと／小論文の反省など、自由に記録してください。";
-  const textarea=document.createElement("textarea");
-  textarea.className="daily-note-textarea";
-  textarea.rows=5;
-  textarea.placeholder="ここにメモを入力…";
-  textarea.value = dailyNotes[dateKey] || "";
-
-  const saveRow=document.createElement("div"); saveRow.className="daily-note-save-row";
-  const saveBtn=document.createElement("button"); saveBtn.type="button"; saveBtn.textContent="保存";
-  const status=document.createElement("span"); status.className="daily-note-status";
-
-  const commit=()=>{
-    saveDailyNote(dateKey, textarea.value);
-    status.textContent="保存しました";
-    updateNoteBadgeForDate(dateKey);
-    if(status._timer) clearTimeout(status._timer);
-    status._timer=setTimeout(()=>{ status.textContent=""; }, 1600);
-  };
-  textarea.onblur=commit;
-  textarea.oninput=()=>{ status.textContent=""; };
-  saveBtn.onclick=commit;
-
-  saveRow.append(saveBtn, status);
-  wrap.append(label, hint, textarea, saveRow);
-  return wrap;
 }
 
 // カレンダー全体を再描画せず、対象日のセルの📝バッジだけを更新する（開いているダイアログのフォーカスを奪わないため）
@@ -434,6 +433,58 @@ function updateNoteBadgeForDate(dateKey){
       noteBadge.remove();
     }
   });
+}
+
+function buildDailyNoteSection(dateKey){
+  const wrap=document.createElement("div"); wrap.className="daily-note-section";
+  const label=document.createElement("div"); label.className="daily-note-label"; label.textContent="📝 定着メモ・反省ノート";
+  const hint=document.createElement("p"); hint.className="note";
+  hint.textContent="今日読んだニュースの要約（120字）／模擬面接でうまく言えなかったこと／小論文の反省など、自由に記録してください。入力が止まると自動保存されます。";
+  const textarea=document.createElement("textarea");
+  textarea.className="daily-note-textarea";
+  textarea.rows=5;
+  textarea.placeholder="ここにメモを入力…";
+  textarea.value = dailyNotes[dateKey] || "";
+
+  const saveRow=document.createElement("div"); saveRow.className="daily-note-save-row";
+  const saveBtn=document.createElement("button"); saveBtn.type="button"; saveBtn.textContent="今すぐ保存";
+  const status=document.createElement("span"); status.className="daily-note-status";
+
+  let debounceTimer = null;
+
+  async function commitNote(){
+    applyDailyNoteToMemory(dateKey, textarea.value);
+    updateNoteBadgeForDate(dateKey);
+    status.textContent = "保存中…";
+    status.className = "daily-note-status pending";
+    const result = await saveData();
+    if(result && result.ok){
+      status.textContent = "自動保存済み";
+      status.className = "daily-note-status saved";
+    } else {
+      status.textContent = "自動保存済み（この端末のみ・オフライン）";
+      status.className = "daily-note-status offline";
+    }
+  }
+
+  textarea.oninput = ()=>{
+    status.textContent = "入力中…（まもなく自動保存）";
+    status.className = "daily-note-status pending";
+    if(debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(commitNote, 500); // 入力が止まって500msで自動保存
+  };
+  textarea.onblur = ()=>{
+    if(debounceTimer){ clearTimeout(debounceTimer); debounceTimer=null; }
+    commitNote();
+  };
+  saveBtn.onclick = ()=>{
+    if(debounceTimer){ clearTimeout(debounceTimer); debounceTimer=null; }
+    commitNote();
+  };
+
+  saveRow.append(saveBtn, status);
+  wrap.append(label, hint, textarea, saveRow);
+  return wrap;
 }
 
 // ---------- Local storage (offline support) ----------
@@ -457,73 +508,104 @@ function saveToLocalStorage(){
   }
 }
 
-// ---------- Sync with the Apps Script backend (independent of any device) ----------
+// ---------- Firestore との同期 ----------
 
 function setSyncPill(mode){
   const el = document.getElementById("syncPill");
   if(mode==="loading"){ el.textContent="読み込み中…"; el.className="sync-pill"; }
   else if(mode==="saving"){ el.textContent="保存中…"; el.className="sync-pill saving"; }
-  else if(mode==="saved"){ el.textContent="保存済み・同期中"; el.className="sync-pill"; }
+  else if(mode==="saved"){ el.textContent="保存済み・リアルタイム同期中"; el.className="sync-pill"; }
   else if(mode==="error"){ el.textContent="保存に失敗しました"; el.className="sync-pill err"; }
   else if(mode==="offline"){ el.textContent="オフライン（ローカル保存中）"; el.className="sync-pill offline"; }
 }
 
-function backendConfigured(){
-  return GAS_URL && !GAS_URL.startsWith("REPLACE_WITH");
+function firestoreConfigured(){
+  return firebaseConfig && firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("YOUR_");
 }
 
-// 起動時：まずローカル保存分を即座に読み込み、その後バックグラウンドでGASの最新データを取得する
-async function loadData(){
-  if(!backendConfigured()){
+// Firebase App / Firestore の初期化。設定が未入力の場合はローカル保存のみで動作する。
+function initFirebase(){
+  if(!firestoreConfigured()){
     document.getElementById("setupBanner").style.display = "block";
-    setSyncPill("offline");
-    return;
+    return false;
   }
-  setSyncPill("loading");
   try{
-    const url = GAS_URL + "?key=" + encodeURIComponent(SECRET_KEY);
-    const res = await fetch(url, { method: "GET" });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if(data.ok === false) throw new Error(data.error || "unauthorized");
-    state = data.state || {};
-    settings = Object.assign({day:3,time:"19:00"}, data.settings || {});
-    customTasks = data.customTasks || {};
-    dailyNotes = data.dailyNotes || {};
-    saveToLocalStorage();
-    setSyncPill("saved");
-    document.getElementById("counselDay").value = settings.day;
-    document.getElementById("counselTime").value = settings.time;
-    render();
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    // オフライン時もFirestoreのローカルキャッシュ（IndexedDB）から読み書きできるようにする
+    db.enablePersistence({ synchronizeTabs: true }).catch((e)=>{
+      console.warn("Firestoreのオフライン永続化を有効化できませんでした", e);
+    });
+    docRef = db.collection(FIRESTORE_COLLECTION).doc(FIRESTORE_DOC);
+    return true;
   }catch(e){
-    console.error("Load failed（ローカル保存データを表示中）", e);
-    setSyncPill("offline");
+    console.error("Firebase の初期化に失敗しました", e);
+    document.getElementById("setupBanner").style.display = "block";
+    return false;
   }
 }
 
-// 保存：まずローカルへ即時保存し、その後バックグラウンドでGASへ送信する
+// リモート（Firestore）から届いたデータを画面の状態へ反映する
+function applyRemoteData(data){
+  state = data.state || {};
+  settings = Object.assign({day:3,time:"19:00"}, data.settings || {});
+  customTasks = data.customTasks || {};
+  dailyNotes = data.dailyNotes || {};
+  saveToLocalStorage();
+  document.getElementById("counselDay").value = settings.day;
+  document.getElementById("counselTime").value = settings.time;
+  render();
+
+  // ダイアログを開いたままメモを入力中の場合は、キー入力を上書きしないようにダイアログの再構築を避ける
+  const dialogEl = document.getElementById("dayDialog");
+  if(openDialogDate && dialogEl.open){
+    const active = document.activeElement;
+    const isTypingNote = active && active.classList && active.classList.contains("daily-note-textarea");
+    if(!isTypingNote){
+      openDay(openDialogDate, getAllTasksForDate(openDialogDate));
+    }
+  }
+}
+
+// onSnapshot によるリアルタイム同期を開始する（他端末での変更が即座に反映される）
+function startRealtimeSync(){
+  if(!docRef) return;
+  setSyncPill("loading");
+  unsubscribeSnapshot = docRef.onSnapshot(
+    (snap)=>{
+      // 自分自身が書き込んだ直後の「サーバー確定前」の通知は、二重描画・カーソル位置のリセットを
+      // 避けるためにスキップする（この端末の状態はすでに書き込み前に反映済みのため）。
+      if(snap.metadata.hasPendingWrites) return;
+      const data = snap.exists ? snap.data() : {};
+      applyRemoteData(data);
+      setSyncPill(snap.metadata.fromCache ? "offline" : "saved");
+    },
+    (err)=>{
+      console.error("Firestoreのリアルタイム同期でエラーが発生しました", err);
+      setSyncPill("offline");
+    }
+  );
+}
+
+// 保存：まずローカルへ即時保存し、その後Firestoreへ書き込む。Promise<{ok:boolean}> を返す。
 async function saveData(){
   saveToLocalStorage();
-  if(!backendConfigured()){
-    document.getElementById("setupBanner").style.display = "block";
+  if(!docRef){
     setSyncPill("offline");
-    return;
+    return { ok:false, offline:true };
   }
   setSyncPill("saving");
   try{
-    // text/plain avoids a CORS preflight request against the Apps Script endpoint.
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ key: SECRET_KEY, state, settings, customTasks, dailyNotes })
+    await docRef.set({
+      state, settings, customTasks, dailyNotes,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if(data.ok === false) throw new Error(data.error || "unauthorized");
     setSyncPill("saved");
+    return { ok:true };
   }catch(e){
-    console.error("Save failed（ローカルには保存済み）", e);
+    console.error("Firestoreへの保存に失敗しました（ローカルには保存済み）", e);
     setSyncPill("offline");
+    return { ok:false, error:e };
   }
 }
 
@@ -818,8 +900,14 @@ updateTimerDisplay();
   document.getElementById("loadOverlay").remove();
   render();
 
-  // 2) バックグラウンドでGASから最新データの取得を試みる（成功時のみ上書きして再描画）
-  loadData();
+  // 2) Firestoreを初期化し、onSnapshotによるリアルタイム同期を開始する
+  //    （成功時は他端末の変更も自動的に反映される。未設定・失敗時はローカル保存のみで動作を継続）
+  const ready = initFirebase();
+  if(ready){
+    startRealtimeSync();
+  } else {
+    setSyncPill("offline");
+  }
 })();
 </script>
 </body>
