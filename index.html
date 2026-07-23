@@ -20,15 +20,16 @@
   .sync-pill{font-size:10px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600}
   .sync-pill.saving{background:#fff2cc;color:#7d5d05}
   .sync-pill.err{background:#ffe7e5;color:#a7332b}
+  .sync-pill.offline{background:#eef1f7;color:#586178}
   .setup-banner{max-width:1500px;margin:10px auto 0;padding:12px 18px;background:#fff2cc;border:1px solid #e7d38c;border-radius:12px;font-size:13px;line-height:1.6}
   .setup-banner code{background:#fffaf0;padding:1px 5px;border-radius:5px}
-  button,select,input{font:inherit}
+  button,select,input,textarea{font:inherit}
   button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;cursor:pointer}
   button:hover{border-color:#aeb8d5}
   button:disabled{opacity:.5;cursor:not-allowed}
   .layout{max-width:1500px;margin:auto;padding:18px;display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
-  .sidebar{padding:16px;align-self:start;position:sticky;top:86px}
+  .sidebar{padding:16px;align-self:start;position:sticky;top:150px}
   .sidebar h2{font-size:15px;margin:2px 0 12px}
   .stat{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
   .progress{height:10px;background:#edf0f6;border-radius:99px;overflow:hidden;margin:11px 0 16px}
@@ -38,6 +39,22 @@
   .legend{display:grid;gap:7px;margin-top:16px;font-size:12px}
   .legend div{display:flex;align-items:center;gap:8px}
   .dot{width:11px;height:11px;border-radius:3px;border:1px solid rgba(0,0,0,.08)}
+  .backup-actions{display:flex;gap:8px;margin-bottom:6px}
+  .backup-actions button{flex:1;font-size:12px;padding:8px 6px}
+  /* ---------- 本番想定カウントダウンタイマー ---------- */
+  .timer-bar{max-width:1500px;margin:0 auto;padding:10px 18px 14px;display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;border-top:1px dashed var(--line)}
+  .timer-label{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .timer-presets{display:flex;gap:8px;flex-wrap:wrap}
+  .timer-presets button{font-size:12px;padding:7px 11px}
+  .timer-presets button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .timer-display{font-variant-numeric:tabular-nums;font-size:26px;font-weight:700;letter-spacing:1px;min-width:104px;text-align:center;background:var(--accent-soft);color:var(--accent);border-radius:12px;padding:6px 12px;transition:background .2s,color .2s}
+  .timer-display.warn{background:var(--exam);color:#a7332b}
+  .timer-controls{display:flex;gap:8px}
+  .timer-controls button{font-size:12px;padding:8px 14px}
+  .timer-controls button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  @media(max-width:900px){
+    .timer-bar{justify-content:center;text-align:center}
+  }
   .calendar-panel{padding:14px;min-width:0;position:relative}
   .cal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
   .cal-head h2{margin:0;font-size:22px}
@@ -52,26 +69,43 @@
   .day.other{background:#fafbfe;color:#adb3c2}
   .day.rest{background:var(--rest)}
   .day.today{outline:2px solid var(--accent);outline-offset:-2px}
-  .date-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .date-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:4px}
   .date-num{font-weight:700;font-size:13px}
-  .badge{font-size:10px;border-radius:999px;padding:2px 6px;background:#eef1f7;color:#586178}
+  .date-row .badges{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+  .badge{font-size:10px;border-radius:999px;padding:2px 6px;background:#eef1f7;color:#586178;white-space:nowrap}
   .badge.exam{background:var(--exam);color:#a7332b}
   .badge.deadline{background:var(--deadline);color:#7d5d05}
   .badge.counsel{background:var(--counsel);color:#227348}
+  .badge.note{background:var(--accent-soft);color:var(--accent)}
   .task{display:flex;gap:6px;align-items:flex-start;font-size:11px;line-height:1.35;margin:5px 0;padding:4px 5px;border-radius:7px}
   .task:hover{background:#f7f9fd}
-  .task input{margin:1px 0 0;flex:0 0 auto}
+  .task input{margin:1px 0 0;flex:0 0 auto;cursor:pointer}
   .task.done span{text-decoration:line-through;color:#99a0b0}
   .task.event{font-weight:700;background:var(--exam)}
   .task.deadline{font-weight:700;background:var(--deadline)}
   .task.counsel{background:var(--counsel)}
-  .rest-note{font-size:12px;color:#7a8190;text-align:center;margin-top:44px}
+  .task.custom{background:#f5f6fb;border-left:3px solid var(--accent)}
+  .task.custom.done{background:var(--done);border-left-color:#7ab88a}
+  .task-del{margin-left:auto;flex:0 0 auto;border:none;background:transparent;color:#a7332b;font-size:11px;padding:0 4px;border-radius:5px;cursor:pointer;line-height:1.4}
+  .task-del:hover{background:#ffe7e5}
+  .rest-note{font-size:12px;color:#7a8190;text-align:center;margin-top:20px}
   .more{font-size:10px;color:var(--accent);cursor:pointer;margin-top:5px}
   dialog{border:none;border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.22);width:min(720px,92vw);max-height:84vh;padding:0}
   dialog::backdrop{background:rgba(20,28,50,.35)}
   .modal-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
   .modal-body{padding:16px 18px;overflow:auto;max-height:68vh}
   .modal-body .task{font-size:14px;padding:8px}
+  .custom-task-form{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+  .custom-task-form input{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px}
+  .custom-task-form button{flex:0 0 auto}
+  /* ---------- 定着メモ・反省ノート ---------- */
+  .daily-note-section{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+  .daily-note-label{font-size:13px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+  .daily-note-textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical;font-size:13px;line-height:1.6;min-height:96px;background:#fbfcff}
+  .daily-note-textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  .daily-note-save-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .daily-note-save-row button{font-size:12px;padding:7px 14px}
+  .daily-note-status{font-size:11px;color:#227348}
   .note{font-size:12px;color:var(--muted);line-height:1.55}
   .load-overlay{position:absolute;inset:0;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);border-radius:16px;z-index:5}
   @media(max-width:900px){
@@ -98,13 +132,27 @@
       <button id="resetBtn">進捗をリセット</button>
     </div>
   </div>
+  <div class="timer-bar">
+    <span class="timer-label">本番想定タイマー</span>
+    <div class="timer-presets">
+      <button type="button" data-mins="90">90分（早稲田）</button>
+      <button type="button" data-mins="60">60分（法政）</button>
+      <button type="button" data-mins="30">30分</button>
+      <button type="button" id="timerClearBtn">リセット</button>
+    </div>
+    <div class="timer-display" id="timerDisplay">00:00</div>
+    <div class="timer-controls">
+      <button type="button" id="timerStartPauseBtn" class="primary">スタート</button>
+      <button type="button" id="timerResetBtn">やり直す</button>
+    </div>
+  </div>
 </header>
 
 <div id="setupBanner" class="setup-banner" style="display:none">
   まだバックエンドの設定が済んでいません。<code>index.html</code> 内の
   <code>GAS_URL</code> をデプロイして得た <code>.../exec</code> のURLに、
   <code>SECRET_KEY</code> を自分だけの合言葉に書き換えてください（<code>Code.gs</code>側の
-  <code>SECRET_KEY</code> と同じ文字列にすること）。それまでは保存できません。
+  <code>SECRET_KEY</code> と同じ文字列にすること）。それまではこの端末内（オフライン）にのみ保存されます。
 </div>
 
 <main class="layout">
@@ -114,6 +162,14 @@
     <div class="stat"><span>対象タスク</span><strong id="totalCount">0</strong></div>
     <div class="stat"><span>達成率</span><strong id="rate">0%</strong></div>
     <div class="progress"><div id="progressBar"></div></div>
+
+    <h2>バックアップ</h2>
+    <div class="backup-actions">
+      <button id="exportBtn">バックアップ（JSON）</button>
+      <button id="importBtn">復元</button>
+    </div>
+    <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    <p class="note">進捗・設定・自由タスク・定着メモをまとめてファイルに保存したり、復元したりできます。</p>
 
     <h2>週1回の進路相談（必須）</h2>
     <div class="settings">
@@ -125,7 +181,7 @@
       </select>
       <label for="counselTime">開始時刻</label>
       <input id="counselTime" type="time" value="19:00">
-      <p class="note">変更すると、全期間の相談予約タスクに反映されます。日曜日は選べません。この設定と進捗はどの端末・どのブラウザから開いても共通で表示されます。</p>
+      <p class="note">変更すると、全期間の相談予約タスクに反映されます。日曜日は選べません。この設定と進捗はどの端末・どのブラウザから開いても共通で表示されます（オフライン時はこの端末内に保存され、次回オンライン時に同期されます）。</p>
     </div>
 
     <h2>表示の意味</h2>
@@ -134,6 +190,8 @@
       <div><span class="dot" style="background:var(--deadline)"></span>出願期間・締切</div>
       <div><span class="dot" style="background:var(--counsel)"></span>進路相談 1時間</div>
       <div><span class="dot" style="background:var(--rest)"></span>日曜・完全休息</div>
+      <div><span class="dot" style="background:var(--accent-soft);border-left:3px solid var(--accent)"></span>自由タスク／メモ</div>
+      <div><span class="dot" style="background:var(--accent-soft)"></span>📝 定着メモあり</div>
     </div>
   </aside>
 
@@ -165,13 +223,19 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxoWR30YK22EBaIjLscjXmv
 /* Code.gs の SECRET_KEY と必ず同じ文字列にしてください。 */
 const SECRET_KEY = "renseihappy";
 
+/* localStorage に保存する際のキー。端末内オフライン保存に使用。 */
+const LOCAL_KEY = "renseiCalendarData_v1";
+
 const START = new Date(2026,6,22);
 const END   = new Date(2027,0,9);
 const DAY = 86400000;
 
 let currentMonth = new Date(2026,6,1);
-let state = {};                          // task completion, keyed by "date|text"
+let state = {};                          // task completion, keyed by "date|text"（自由タスクはid）
 let settings = { day: 3, time: "19:00" }; // weekly counseling settings
+let customTasks = {};                    // user-defined tasks/memos, keyed by date "YYYY-MM-DD" -> [{id,text}]
+let dailyNotes = {};                      // 定着メモ・反省ノート, keyed by date "YYYY-MM-DD" -> string
+let openDialogDate = null;               // currently open dialog's Date object (for live refresh)
 
 const fixedEvents = {
   "2026-09-15":[["deadline","早稲田 出願開始（Web・書類郵送）"]],
@@ -249,7 +313,8 @@ function phaseTasks(d){
   ];
   for(const [date,text] of reminders) if(key===ymd(date)) add(tasks,"deadline",text);
 
-  if(dow===Number(settings.day)){
+  const dow2 = d.getDay();
+  if(dow2===Number(settings.day)){
     add(tasks,"counsel",`進路相談（必須・1時間） ${settings.time}〜`);
   }
 
@@ -259,6 +324,139 @@ function phaseTasks(d){
 
 function taskId(date,text){ return `${date}|${text}`; }
 
+// ---------- Custom tasks / memos (user-added) ----------
+
+function getCustomTasksForDate(key){
+  return (customTasks[key]||[]).map(ct=>({type:"custom", text:ct.text, custom:true, id:ct.id}));
+}
+
+function getAllTasksForDate(d){
+  const key = ymd(d);
+  return phaseTasks(d).concat(getCustomTasksForDate(key));
+}
+
+function addCustomTask(dateKey, text){
+  const trimmed = (text||"").trim();
+  if(!trimmed) return;
+  if(!customTasks[dateKey]) customTasks[dateKey] = [];
+  const id = `custom-${dateKey}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+  customTasks[dateKey].push({ id, text: trimmed });
+  saveData();
+  refreshView(dateKey);
+}
+
+function removeCustomTask(dateKey, id){
+  if(!confirm("この自由タスク／メモを削除しますか？")) return;
+  const list = customTasks[dateKey];
+  if(list){
+    const idx = list.findIndex(x=>x.id===id);
+    if(idx>-1) list.splice(idx,1);
+    if(list.length===0) delete customTasks[dateKey];
+  }
+  delete state[id];
+  saveData();
+  refreshView(dateKey);
+}
+
+function refreshView(dateKey){
+  render();
+  const dialogEl = document.getElementById("dayDialog");
+  if(openDialogDate && dialogEl.open && ymd(openDialogDate)===dateKey){
+    openDay(openDialogDate, getAllTasksForDate(openDialogDate));
+  }
+}
+
+function buildCustomTaskForm(dateKey){
+  const wrap=document.createElement("div"); wrap.className="custom-task-form";
+  const input=document.createElement("input");
+  input.type="text"; input.placeholder="自由タスク／メモを追加"; input.maxLength=120;
+  const btn=document.createElement("button"); btn.type="button"; btn.textContent="追加";
+  const submit=()=>{ addCustomTask(dateKey, input.value); input.value=""; input.focus(); };
+  btn.onclick=submit;
+  input.onkeydown=(e)=>{ if(e.key==="Enter"){ e.preventDefault(); submit(); } };
+  wrap.append(input, btn);
+  return wrap;
+}
+
+// ---------- 定着メモ・反省ノート（日付ごとの自由記述ログ） ----------
+
+function saveDailyNote(dateKey, text){
+  const trimmed = (text||"");
+  if(trimmed.trim()===""){
+    delete dailyNotes[dateKey];
+  } else {
+    dailyNotes[dateKey] = trimmed;
+  }
+  saveData();
+}
+
+function buildDailyNoteSection(dateKey){
+  const wrap=document.createElement("div"); wrap.className="daily-note-section";
+  const label=document.createElement("div"); label.className="daily-note-label"; label.textContent="📝 定着メモ・反省ノート";
+  const hint=document.createElement("p"); hint.className="note";
+  hint.textContent="今日読んだニュースの要約（120字）／模擬面接でうまく言えなかったこと／小論文の反省など、自由に記録してください。";
+  const textarea=document.createElement("textarea");
+  textarea.className="daily-note-textarea";
+  textarea.rows=5;
+  textarea.placeholder="ここにメモを入力…";
+  textarea.value = dailyNotes[dateKey] || "";
+
+  const saveRow=document.createElement("div"); saveRow.className="daily-note-save-row";
+  const saveBtn=document.createElement("button"); saveBtn.type="button"; saveBtn.textContent="保存";
+  const status=document.createElement("span"); status.className="daily-note-status";
+
+  const commit=()=>{
+    saveDailyNote(dateKey, textarea.value);
+    status.textContent="保存しました";
+    updateNoteBadgeForDate(dateKey);
+    if(status._timer) clearTimeout(status._timer);
+    status._timer=setTimeout(()=>{ status.textContent=""; }, 1600);
+  };
+  textarea.onblur=commit;
+  textarea.oninput=()=>{ status.textContent=""; };
+  saveBtn.onclick=commit;
+
+  saveRow.append(saveBtn, status);
+  wrap.append(label, hint, textarea, saveRow);
+  return wrap;
+}
+
+// カレンダー全体を再描画せず、対象日のセルの📝バッジだけを更新する（開いているダイアログのフォーカスを奪わないため）
+function updateNoteBadgeForDate(dateKey){
+  const cells = document.querySelectorAll(`.day[data-date="${dateKey}"] .badges`);
+  cells.forEach(badgesEl=>{
+    const hasNote = !!(dailyNotes[dateKey] && dailyNotes[dateKey].trim()!=="");
+    let noteBadge = badgesEl.querySelector(".badge.note");
+    if(hasNote && !noteBadge){
+      const span=document.createElement("span"); span.className="badge note"; span.textContent="📝 メモ";
+      badgesEl.appendChild(span);
+    } else if(!hasNote && noteBadge){
+      noteBadge.remove();
+    }
+  });
+}
+
+// ---------- Local storage (offline support) ----------
+
+function loadFromLocalStorage(){
+  try{
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){
+    console.error("localStorage read failed", e);
+    return null;
+  }
+}
+
+function saveToLocalStorage(){
+  try{
+    localStorage.setItem(LOCAL_KEY, JSON.stringify({ state, settings, customTasks, dailyNotes }));
+  }catch(e){
+    console.error("localStorage write failed", e);
+  }
+}
+
 // ---------- Sync with the Apps Script backend (independent of any device) ----------
 
 function setSyncPill(mode){
@@ -267,19 +465,21 @@ function setSyncPill(mode){
   else if(mode==="saving"){ el.textContent="保存中…"; el.className="sync-pill saving"; }
   else if(mode==="saved"){ el.textContent="保存済み・同期中"; el.className="sync-pill"; }
   else if(mode==="error"){ el.textContent="保存に失敗しました"; el.className="sync-pill err"; }
+  else if(mode==="offline"){ el.textContent="オフライン（ローカル保存中）"; el.className="sync-pill offline"; }
 }
 
 function backendConfigured(){
   return GAS_URL && !GAS_URL.startsWith("REPLACE_WITH");
 }
 
+// 起動時：まずローカル保存分を即座に読み込み、その後バックグラウンドでGASの最新データを取得する
 async function loadData(){
-  setSyncPill("loading");
   if(!backendConfigured()){
     document.getElementById("setupBanner").style.display = "block";
-    setSyncPill("error");
+    setSyncPill("offline");
     return;
   }
+  setSyncPill("loading");
   try{
     const url = GAS_URL + "?key=" + encodeURIComponent(SECRET_KEY);
     const res = await fetch(url, { method: "GET" });
@@ -288,17 +488,25 @@ async function loadData(){
     if(data.ok === false) throw new Error(data.error || "unauthorized");
     state = data.state || {};
     settings = Object.assign({day:3,time:"19:00"}, data.settings || {});
+    customTasks = data.customTasks || {};
+    dailyNotes = data.dailyNotes || {};
+    saveToLocalStorage();
     setSyncPill("saved");
+    document.getElementById("counselDay").value = settings.day;
+    document.getElementById("counselTime").value = settings.time;
+    render();
   }catch(e){
-    console.error("Load failed", e);
-    setSyncPill("error");
+    console.error("Load failed（ローカル保存データを表示中）", e);
+    setSyncPill("offline");
   }
 }
 
+// 保存：まずローカルへ即時保存し、その後バックグラウンドでGASへ送信する
 async function saveData(){
+  saveToLocalStorage();
   if(!backendConfigured()){
     document.getElementById("setupBanner").style.display = "block";
-    setSyncPill("error");
+    setSyncPill("offline");
     return;
   }
   setSyncPill("saving");
@@ -307,15 +515,15 @@ async function saveData(){
     const res = await fetch(GAS_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ key: SECRET_KEY, state, settings })
+      body: JSON.stringify({ key: SECRET_KEY, state, settings, customTasks, dailyNotes })
     });
     if(!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     if(data.ok === false) throw new Error(data.error || "unauthorized");
     setSyncPill("saved");
   }catch(e){
-    console.error("Save failed", e);
-    setSyncPill("error");
+    console.error("Save failed（ローカルには保存済み）", e);
+    setSyncPill("offline");
   }
 }
 
@@ -328,32 +536,42 @@ function render(){
   const gridStart=new Date(first); gridStart.setDate(1-first.getDay());
   for(let i=0;i<42;i++){
     const d=new Date(gridStart); d.setDate(gridStart.getDate()+i);
-    const key=ymd(d), tasks=phaseTasks(d);
+    const key=ymd(d);
+    const phaseT=phaseTasks(d);
+    const customT=getCustomTasksForDate(key);
+    const tasks=phaseT.concat(customT);
     const cell=document.createElement("div");
     cell.className="day"+(d.getMonth()!==currentMonth.getMonth()?" other":"")+(d.getDay()===0?" rest":"")+(key===ymd(new Date())?" today":"");
+    cell.dataset.date = key;
     const badges=[];
     if(fixedEvents[key]?.some(x=>x[0]==="event")) badges.push('<span class="badge exam">重要日</span>');
     else if(fixedEvents[key]?.some(x=>x[0]==="deadline")) badges.push('<span class="badge deadline">出願</span>');
     else if(d.getDay()===Number(settings.day) && inRange(d)) badges.push('<span class="badge counsel">相談</span>');
-    cell.innerHTML=`<div class="date-row"><span class="date-num">${d.getDate()}</span><span>${badges.join("")}</span></div>`;
+    if(dailyNotes[key] && dailyNotes[key].trim()!=="") badges.push('<span class="badge note">📝 メモ</span>');
+    cell.innerHTML=`<div class="date-row"><span class="date-num">${d.getDate()}</span><span class="badges">${badges.join("")}</span></div>`;
     if(d.getDay()===0 && inRange(d)){
       cell.innerHTML += '<div class="rest-note">完全休息日<br>勉強タスクなし</div>';
+      customT.forEach(t=>cell.appendChild(taskNode(key,t)));
     } else {
       const visible=tasks.slice(0,4);
       visible.forEach(t=>cell.appendChild(taskNode(key,t)));
       if(tasks.length>4){
         const more=document.createElement("div"); more.className="more"; more.textContent=`＋${tasks.length-4}件を表示`;
-        more.onclick=()=>openDay(d,tasks); cell.appendChild(more);
+        more.onclick=(e)=>{ e.stopPropagation(); openDay(d,tasks); }; cell.appendChild(more);
       }
     }
-    if(tasks.length && tasks.length<=4) cell.onclick=(e)=>{ if(e.target.tagName!=="INPUT") openDay(d,tasks); };
+    if(tasks.length<=4) cell.onclick=(e)=>{ if(e.target.tagName!=="INPUT" && e.target.tagName!=="BUTTON") openDay(d,tasks); };
     cal.appendChild(cell);
   }
   updateStats();
 }
 
 function taskNode(date,t){
-  const id=taskId(date,t.text), wrap=document.createElement("label");
+  const id = t.custom ? t.id : taskId(date,t.text);
+  // labelではなくdivでラップする：labelだとチェックボックス以外の場所（テキストや余白）を
+  // クリックしただけでも完了扱いになってしまうため、チェックのON/OFFはチェックボックス自身の
+  // クリックでのみ発生するようにする。
+  const wrap=document.createElement("div");
   wrap.className=`task ${t.type} ${state[id]?"done":""}`;
   const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!state[id];
   const span=document.createElement("span"); span.textContent=t.text;
@@ -364,14 +582,31 @@ function taskNode(date,t){
     saveData();
     e.stopPropagation();
   };
-  wrap.append(cb,span); return wrap;
+  cb.onclick=(e)=>{ e.stopPropagation(); };
+  wrap.append(cb,span);
+  if(t.custom){
+    const del=document.createElement("button");
+    del.type="button"; del.className="task-del"; del.textContent="✕"; del.title="削除";
+    del.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); removeCustomTask(date, t.id); };
+    wrap.appendChild(del);
+  }
+  return wrap;
 }
 
 function openDay(d,tasks){
+  openDialogDate = d;
+  const key = ymd(d);
   document.getElementById("dialogTitle").textContent=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${"日月火水木金土"[d.getDay()]}）`;
   const body=document.getElementById("dialogBody"); body.innerHTML="";
-  if(d.getDay()===0){ body.innerHTML='<p>完全休息日です。学習・相談の予定は入れません。</p>'; }
-  else tasks.forEach(t=>body.appendChild(taskNode(ymd(d),t)));
+  if(d.getDay()===0){
+    const p=document.createElement("p"); p.textContent="完全休息日です。学習・相談の予定は入れません。";
+    body.appendChild(p);
+    getCustomTasksForDate(key).forEach(t=>body.appendChild(taskNode(key,t)));
+  } else {
+    tasks.forEach(t=>body.appendChild(taskNode(key,t)));
+  }
+  body.appendChild(buildCustomTaskForm(key));
+  body.appendChild(buildDailyNoteSection(key));
   document.getElementById("dayDialog").showModal();
 }
 
@@ -389,7 +624,13 @@ document.getElementById("prevBtn").onclick=()=>{ currentMonth=new Date(currentMo
 document.getElementById("nextBtn").onclick=()=>{ currentMonth=new Date(currentMonth.getFullYear(),currentMonth.getMonth()+1,1); render(); };
 document.getElementById("todayBtn").onclick=()=>{ const t=new Date(); currentMonth=inRange(t)?new Date(t.getFullYear(),t.getMonth(),1):new Date(2026,6,1); render(); };
 document.getElementById("jumpStartBtn").onclick=()=>{ currentMonth=new Date(2026,6,1); render(); };
-document.getElementById("closeDialog").onclick=()=>document.getElementById("dayDialog").close();
+document.getElementById("closeDialog").onclick=()=>{
+  // ダイアログを閉じる前に、メモ欄がフォーカスされたままなら保存を確定させる
+  const focused = document.activeElement;
+  if(focused && focused.classList && focused.classList.contains("daily-note-textarea")) focused.blur();
+  document.getElementById("dayDialog").close();
+  openDialogDate=null;
+};
 
 document.getElementById("resetBtn").onclick=async ()=>{
   if(!confirm("すべての完了チェックをリセットしますか？（他の端末の表示にも反映されます）")) return;
@@ -411,12 +652,174 @@ document.getElementById("counselTime").onchange=async ()=>{
   render();
 };
 
+// ---------- Backup: export / import ----------
+
+document.getElementById("exportBtn").onclick=()=>{
+  const payload = { state, settings, customTasks, dailyNotes, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `rensei-calendar-backup-${ymd(new Date())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById("importBtn").onclick=()=>{
+  document.getElementById("importFile").click();
+};
+
+document.getElementById("importFile").onchange=(e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      if(!confirm("現在のデータを上書きして復元しますか？この操作は取り消せません。")){
+        e.target.value = "";
+        return;
+      }
+      state = data.state || {};
+      settings = Object.assign({day:3,time:"19:00"}, data.settings || {});
+      customTasks = data.customTasks || {};
+      dailyNotes = data.dailyNotes || {};
+      document.getElementById("counselDay").value = settings.day;
+      document.getElementById("counselTime").value = settings.time;
+      saveToLocalStorage();
+      render();
+      await saveData();
+      alert("復元が完了しました。");
+    }catch(err){
+      console.error("Import failed", err);
+      alert("ファイルの読み込みに失敗しました。正しいバックアップJSONファイルを選択してください。");
+    }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+};
+
+// ---------- 本番想定カウントダウンタイマー ----------
+
+let timerDurationSec = 0;   // 直近に選んだプリセットの秒数（「やり直す」で戻る先）
+let timerRemainingSec = 0;  // 残り秒数
+let timerIntervalId = null;
+let timerRunning = false;
+
+function formatTimer(totalSec){
+  const m = Math.floor(totalSec/60);
+  const s = totalSec%60;
+  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+function updateTimerDisplay(){
+  const el = document.getElementById("timerDisplay");
+  el.textContent = formatTimer(Math.max(timerRemainingSec,0));
+  el.classList.toggle("warn", timerRunning && timerRemainingSec>0 && timerRemainingSec<=10);
+}
+
+function setActivePresetButton(mins){
+  document.querySelectorAll(".timer-presets button[data-mins]").forEach(btn=>{
+    btn.classList.toggle("active", Number(btn.dataset.mins)===mins);
+  });
+}
+
+function setTimerPreset(minutes){
+  pauseTimer();
+  timerDurationSec = minutes*60;
+  timerRemainingSec = timerDurationSec;
+  setActivePresetButton(minutes);
+  updateTimerDisplay();
+}
+
+function startTimer(){
+  if(timerRemainingSec<=0) return;
+  timerRunning = true;
+  document.getElementById("timerStartPauseBtn").textContent = "一時停止";
+  timerIntervalId = setInterval(()=>{
+    timerRemainingSec--;
+    updateTimerDisplay();
+    if(timerRemainingSec<=0){
+      pauseTimer();
+      playTimerFinishSound();
+      alert("時間終了です！お疲れさまでした。");
+    }
+  },1000);
+}
+
+function pauseTimer(){
+  timerRunning = false;
+  if(timerIntervalId){ clearInterval(timerIntervalId); timerIntervalId=null; }
+  document.getElementById("timerStartPauseBtn").textContent = "スタート";
+  updateTimerDisplay();
+}
+
+function resetTimer(){
+  pauseTimer();
+  timerRemainingSec = timerDurationSec;
+  updateTimerDisplay();
+}
+
+function clearTimer(){
+  pauseTimer();
+  timerDurationSec = 0;
+  timerRemainingSec = 0;
+  setActivePresetButton(-1);
+  updateTimerDisplay();
+}
+
+// Web Audio APIで簡易的な終了音（ビープ2回）を鳴らす
+function playTimerFinishSound(){
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;
+    const ctx = new Ctx();
+    const beep = (startTime)=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.3, startTime+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime+0.5);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime+0.55);
+    };
+    beep(ctx.currentTime);
+    beep(ctx.currentTime+0.65);
+  }catch(e){
+    console.error("Timer sound failed", e);
+  }
+}
+
+document.querySelectorAll(".timer-presets button[data-mins]").forEach(btn=>{
+  btn.onclick=()=>setTimerPreset(Number(btn.dataset.mins));
+});
+document.getElementById("timerClearBtn").onclick=clearTimer;
+document.getElementById("timerStartPauseBtn").onclick=()=>{ timerRunning ? pauseTimer() : startTimer(); };
+document.getElementById("timerResetBtn").onclick=resetTimer;
+updateTimerDisplay();
+
 (async function init(){
-  await loadData();
+  // 1) まずlocalStorageから即座に読み込んで画面を描画（オフラインでも即使える）
+  const local = loadFromLocalStorage();
+  if(local){
+    state = local.state || {};
+    settings = Object.assign({day:3,time:"19:00"}, local.settings || {});
+    customTasks = local.customTasks || {};
+    dailyNotes = local.dailyNotes || {};
+    setSyncPill("offline");
+  }
   document.getElementById("counselDay").value = settings.day;
   document.getElementById("counselTime").value = settings.time;
   document.getElementById("loadOverlay").remove();
   render();
+
+  // 2) バックグラウンドでGASから最新データの取得を試みる（成功時のみ上書きして再描画）
+  loadData();
 })();
 </script>
 </body>
