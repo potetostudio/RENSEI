@@ -132,7 +132,6 @@
     </div>
     <div>
       <button id="todayBtn">今日へ</button>
-      <button id="resetBtn">進捗をリセット</button>
     </div>
   </div>
   <div class="timer-bar">
@@ -712,15 +711,6 @@ document.getElementById("closeDialog").onclick=()=>{
   if(focused && focused.classList && focused.classList.contains("daily-note-textarea")) focused.blur();
   document.getElementById("dayDialog").close();
   openDialogDate=null;
-};
-
-document.getElementById("resetBtn").onclick=async ()=>{
-  if(!confirm("すべての完了チェックをリセットしますか？（他の端末の表示にも反映されます）")) return;
-  document.getElementById("resetBtn").disabled = true;
-  state={};
-  await saveData();
-  document.getElementById("resetBtn").disabled = false;
-  render();
 };
 
 document.getElementById("counselDay").onchange=async ()=>{
